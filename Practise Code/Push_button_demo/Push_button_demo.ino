@@ -2,7 +2,7 @@ bool led_state = 0;
 void setup() {
   Serial.begin(115200);
   pinMode(0, INPUT_PULLUP);
-  pinMode(22, OUTPUT);
+  pinMode(2, OUTPUT);
 }
 
 void loop() {
@@ -10,6 +10,6 @@ void loop() {
   if (r) {
     Serial.println(r);
     led_state = !led_state;
-    digitalWrite(22, led_state);
+    digitalWrite(2, led_state);
   }
 }
