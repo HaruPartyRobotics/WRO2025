@@ -1,32 +1,46 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-#define l1 4
-#define pb 5
-#define l2 19
-#define l3 16
-#define st 14
-unsigned long cms = 0;
+#define buzzerPin 13
+#define pbPin 5
+#define redLedPin 4
+#define blueLedPin 19
+#define toggleswitch 14
+#define emergencyLedPin 16
+#define MAX_NORMAL 10
+#define MAX_EMERGENCY_LIFETIME 20
+#define BUZZER_CHANNEL 0
 unsigned long pms = 0;
-bool d = 0;
+bool hlo = 0;
 
-uint8_t peerAddress[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+int normalCarIDs[MAX_NORMAL];
+bool normalCarActive[MAX_NORMAL];
+int normalCount = 0;
+
+uint8_t emergencyIdsLifetime[MAX_EMERGENCY_LIFETIME];
+bool emergencyIdsBuzzerDone[MAX_EMERGENCY_LIFETIME];
+bool emergencyLedActive[MAX_EMERGENCY_LIFETIME];
+int emergencyIdsCount = 0;
 
 typedef struct struct_message {
+  uint8_t id;
   bool b;
 } struct_message;
 
 struct_message myData;
 struct_message myDatar;
+
+uint8_t peerAddress[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 esp_now_peer_info_t peerInfo;
 
 void setup() {
   Serial.begin(115200);
-  pinMode(l1, OUTPUT);
-  pinMode(l2, OUTPUT);
-  pinMode(l3, OUTPUT);
-  pinMode(pb, INPUT_PULLUP);
-  pinMode(st, INPUT_PULLUP);
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(pbPin, INPUT_PULLUP);
+  pinMode(blueLedPin, OUTPUT);
+  pinMode(redLedPin, OUTPUT);
+  pinMode(emergencyLedPin, OUTPUT);
+  digitalWrite(emergencyLedPin, LOW);
   WiFi.mode(WIFI_STA);
   if (esp_now_init() != ESP_OK) {
     ESP.restart();
@@ -38,38 +52,135 @@ void setup() {
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
     ESP.restart();
   }
+  ledcSetup(BUZZER_CHANNEL, 2000, 8);
+  ledcAttachPin(buzzerPin, BUZZER_CHANNEL);
 }
 
 void loop() {
-  myData.b = !digitalRead(pb);
+  bool buttonPressed = !digitalRead(pbPin);
+  myData.id = 90;
+  myData.b = buttonPressed;
   esp_now_send(peerAddress, (uint8_t *)&myData, sizeof(myData));
   delay(100);
-  bool rd = digitalRead(st);
-  cms = millis();
-  if (rd == 0) {
-    if (cms - pms >= 500) {
-      d = !d;
-      digitalWrite(l1, d);
-      digitalWrite(l2, !d);
-      pms = cms;
+  if(!digitalRead(toggleswitch)){
+    if(millis()- pms > 500){
+      hlo = !hlo;
+      digitalWrite(redLedPin, hlo);
+      digitalWrite(blueLedPin, !hlo);
+      pms = millis();
     }
-  } 
+  }
   else{
-    digitalWrite(l1, 0);
-    digitalWrite(l2, 0);
+    digitalWrite(blueLedPin, 0);
+    digitalWrite(redLedPin, 0);
+  }
+  if(myDatar.b){
+    playBuzzerTone(normalCount);
+  }
+  else{
+    ledcWriteTone(BUZZER_CHANNEL, 0);
   }
 }
 
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   memcpy(&myDatar, incomingData, sizeof(myDatar));
-    if(myDatar.b){
-      digitalWrite(l3, 1);
+  uint8_t rcvId = myDatar.id;
+  bool rcvB = myDatar.b;
+
+  if (rcvId >= 1 && rcvId <= 10) {
+    if (rcvB) {
+      addOrActivateNormal(rcvId);
+      playBuzzerTone(normalCount);
+    } else {
+      removeNormal(rcvId);
     }
-    else {
-      digitalWrite(l3, 0);
+  } else if (rcvId >= 90 && rcvId <= 99) {
+    handleEmergencySignal(rcvId, rcvB);
+  }
+  updateEmergencyLed();
+}
+
+void addOrActivateNormal(int id) {
+  for (int i = 0; i < normalCount; i++) {
+    if (normalCarIDs[i] == id) {
+      normalCarActive[i] = true;
+      return;
     }
-  Serial.print("Received Button: ");
-  Serial.println(myDatar.b);
-  Serial.print("Sent Button: ");
-  Serial.println(myData.b);
+  }
+  if (normalCount < MAX_NORMAL) {
+    normalCarIDs[normalCount] = id;
+    normalCarActive[normalCount] = true;
+    normalCount++;
+  }
+}
+
+void removeNormal(int id) {
+  for (int i = 0; i < normalCount; i++) {
+    if (normalCarIDs[i] == id) {
+      for (int j = i; j < normalCount - 1; j++) {
+        normalCarIDs[j] = normalCarIDs[j + 1];
+        normalCarActive[j] = normalCarActive[j + 1];
+      }
+      normalCount--;
+      break;
+    }
+  }
+}
+
+void handleEmergencySignal(uint8_t rcvId, bool rcvB) {
+  int idx = -1;
+  for (int i = 0; i < emergencyIdsCount; i++) {
+    if (emergencyIdsLifetime[i] == rcvId) {
+      idx = i;
+      break;
+    }
+  }
+  if (idx == -1) {
+    if (emergencyIdsCount < MAX_EMERGENCY_LIFETIME) {
+      emergencyIdsLifetime[emergencyIdsCount] = rcvId;
+      emergencyIdsBuzzerDone[emergencyIdsCount] = false;
+      emergencyLedActive[emergencyIdsCount] = false;
+      idx = emergencyIdsCount;
+      emergencyIdsCount++;
+    } else {
+      return;
+    }
+  }
+  if (rcvB) {
+    if (!emergencyIdsBuzzerDone[idx]) {
+      playSpecialBuzzer();
+      emergencyIdsBuzzerDone[idx] = true;
+      emergencyLedActive[idx] = false;
+    } else {
+      if (!emergencyLedActive[idx]) {
+        emergencyLedActive[idx] = true;
+      }
+    }
+  } else {
+    if (emergencyLedActive[idx]) {
+      emergencyLedActive[idx] = false;
+    }
+  }
+}
+
+void updateEmergencyLed() {
+  bool anyActive = false;
+  for (int i = 0; i < emergencyIdsCount; i++) {
+    if (emergencyLedActive[i]) {
+      anyActive = true;
+      break;
+    }
+  }
+  digitalWrite(emergencyLedPin, anyActive ? HIGH : LOW);
+}
+
+void playBuzzerTone(int count) {
+  int freq = 280 + count * 16;
+  ledcWriteTone(BUZZER_CHANNEL, freq);
+}
+
+void playSpecialBuzzer() {
+  ledcWriteTone(BUZZER_CHANNEL, 1000);
+  delay(300);
+  ledcWriteTone(BUZZER_CHANNEL, 0);
 }
