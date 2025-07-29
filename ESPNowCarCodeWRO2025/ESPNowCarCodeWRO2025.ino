@@ -3,17 +3,15 @@
 
 #define buzzerPin 13
 #define pbPin 5
-#define redLedPin 4
-#define blueLedPin 19
+#define nlight 4
 #define emergencyLedPin 19
-#define MAX_NORMAL 10
+#define MAX_NORMAL 12
 #define MAX_EMERGENCY_LIFETIME 20
 #define BUZZER_CHANNEL 0
 
 int normalCarIDs[MAX_NORMAL];
 bool normalCarActive[MAX_NORMAL];
 int normalCount = 0;
-
 uint8_t emergencyIdsLifetime[MAX_EMERGENCY_LIFETIME];
 bool emergencyIdsBuzzerDone[MAX_EMERGENCY_LIFETIME];
 bool emergencyLedActive[MAX_EMERGENCY_LIFETIME];
@@ -76,13 +74,13 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   uint8_t rcvId = myDatar.id;
   bool rcvB = myDatar.b;
 
-  if (rcvId >= 1 && rcvId <= 10) {
+  if (rcvId >= 1 && rcvId <= 12) {
     if (rcvB) {
       addOrActivateNormal(rcvId);
     } else {
       removeNormal(rcvId);
     }
-  } else if (rcvId >= 90 && rcvId <= 99) {
+  } else if (rcvId >= 90 && rcvId <= 92) {
     handleEmergencySignal(rcvId, rcvB);
   }
   updateEmergencyLed();

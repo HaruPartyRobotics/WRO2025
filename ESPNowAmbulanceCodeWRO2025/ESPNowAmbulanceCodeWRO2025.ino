@@ -7,7 +7,7 @@
 #define blueLedPin 19
 #define toggleswitch 14
 #define emergencyLedPin 16
-#define MAX_NORMAL 10
+#define MAX_NORMAL 12
 #define MAX_EMERGENCY_LIFETIME 20
 #define BUZZER_CHANNEL 0
 unsigned long pms = 0;
@@ -88,14 +88,14 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   uint8_t rcvId = myDatar.id;
   bool rcvB = myDatar.b;
 
-  if (rcvId >= 1 && rcvId <= 10) {
+  if (rcvId >= 1 && rcvId <= 12) {
     if (rcvB) {
       addOrActivateNormal(rcvId);
       playBuzzerTone(normalCount);
     } else {
       removeNormal(rcvId);
     }
-  } else if (rcvId >= 90 && rcvId <= 99) {
+  } else if (rcvId >= 90 && rcvId <= 92) {
     handleEmergencySignal(rcvId, rcvB);
   }
   updateEmergencyLed();
