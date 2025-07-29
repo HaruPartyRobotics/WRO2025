@@ -58,11 +58,9 @@ void setup() {
 
 void loop() {
   bool buttonPressed = !digitalRead(pbPin);
-  myData.id = 90;
   myData.b = buttonPressed;
-  esp_now_send(peerAddress, (uint8_t *)&myData, sizeof(myData));
-  delay(100);
   if(!digitalRead(toggleswitch)){
+    myData.id = 90;
     if(millis()- pms > 500){
       hlo = !hlo;
       digitalWrite(redLedPin, hlo);
@@ -71,9 +69,12 @@ void loop() {
     }
   }
   else{
+    myData.id = 11;
     digitalWrite(blueLedPin, 0);
     digitalWrite(redLedPin, 0);
   }
+  esp_now_send(peerAddress, (uint8_t *)&myData, sizeof(myData));
+  delay(100);
   if(myDatar.b){
     playBuzzerTone(normalCount);
   }
