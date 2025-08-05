@@ -28,12 +28,20 @@ void loop() {
   if (dir == 0) {
     if ((millis() - x) > time1) {
       dir = 1;
-      digitalWrite(red_0, 1;
+      digitalWrite(red_0, 1);
       digitalWrite(green_1, 1);
+      digitalWrite(red_1, 0);
+      digitalWrite(green_0, 0);
+      digitalWrite(yellow_0, 0);
+      digitalWrite(yellow_1, 0);
     } 
     else if ((millis() - x) > (time1 - 1000)) {
       digitalWrite(yellow_0, 1);
       digitalWrite(yellow_1, 1);
+      digitalWrite(red_0, 0);
+      digitalWrite(green_0, 0);
+      digitalWrite(red_0, 0);
+      digitalWrite(green_0, 0);
     }
   }
 
