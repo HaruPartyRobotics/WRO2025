@@ -2,22 +2,22 @@ uint32_t t1, t2 = 0;
 int time1 = 10000, time2 = 10000;
 int interval1;
 int interval2;
-#define side0green 17
-#define side0yellow 27
-#define side0red 23
-#define side1green 34
-#define side1yellow 35
-#define side1red 36
+#define side0green 4
+#define side0yellow 12
+#define side0red 13
+#define side1green 16
+#define side1yellow 17
+#define side1red 27
 #define l 100
 unsigned long mls;
 bool side = 0;
 void setup() {
+  pinMode(4, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+  pinMode(16, OUTPUT);
   pinMode(17, OUTPUT);
   pinMode(27, OUTPUT);
-  pinMode(23, OUTPUT);
-  pinMode(34, OUTPUT);
-  pinMode(35, OUTPUT);
-  pinMode(36, OUTPUT);
   t1 = t2 = millis();
   Serial.begin(115200);
 }
