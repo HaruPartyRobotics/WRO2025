@@ -1,0 +1,83 @@
+⦾Ideas:
+
+‣   Bazaar
+	Original Selling Price of Present Day
+	Cleaning The Area
+‣   Garbage Duty
+	Trash Bag Collection + Transportation  .
+	Differentiating garbage                .
+	Burying Organic Waste                  .   + Alingon
+	Seperating Harmful Substances          .
+	Rewarding                              .
+‣   Environment Care
+	Filling up Available Spaces by Planting Trees
+	Watering Plants
+	Identifying Plant Deficiencies
+	Fertilizing
+‣   Mosquito Prevention
+	Removing Water from Tubs and Cannisters
+	QR Code Movement - Mosquito Spray Daily
+‣   Street Food PLace
+	Area Clean and Hygienic
+	Portable Shed
+	Hygiene Check
+‣   Traffic-Control Robot:
+	AI Decision Making
+	Smart Traffic Signal 
+	Traffic Incident Detection
+	Aerial Surveillance
+‣   Delivery Robot:
+	Co-existence with Pedestrian
+	Last-Minute Deleveries
+‣   Parking Solutions:
+	Automoted Parking Assistant
+	Space Usage
+‣   Transit Road:
+	Last-Minute Shuttle Services
+	Autonomous Buses and Trains
+‣   Pedestarian Safety:
+	Crosswalk Assistance
+	Monitoring Vehicles
+‣   Road Maintenance:
+	Road Repair
+	Maintenance Alert System
+‣   Vehicle to Vehicle Communication:
+	
+‣   Disaster Response:
+	Deliver Supplies
+	Navigate the Area
+‣   Social Companion:
+	Provide Info in Front of Malls, Stations etc
+	Guidance to People
+‣   Housing:
+	Apartment Search
+	Home Decor
+	Renovation Ideas
+	Move-In Bot
+‣   Eco-Friendly Robot:
+	Control Electric Lines
+	Alert Electric Leaks
+	Electric Wastage Prevention
+‣   Water Pipes:
+	Detecting Leaks
+	Cleaning Debris
+	Minor Repairs
+	Detecting Gas Leaks 
+	Auto Shutdown in Peril
+‣   Infrastructural Development:
+	Inspection Bots
+	Checking for Cracks, Decoy 
+	Real Time Feed
+‣   Power Grid:
+	
+	
+
+
+
+
+
+
+
+
+
+
