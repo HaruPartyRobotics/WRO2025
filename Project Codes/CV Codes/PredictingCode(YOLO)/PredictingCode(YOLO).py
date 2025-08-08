@@ -1,7 +1,10 @@
 from ultralytics import YOLO
 import cv2 as cv
+import time
+import serial
 
-Model_File_Number = 0  # The number after "train"
+Pyserial = serial.Serial("COM3", 115200)
+Model_File_Number = 0  # The Number After "train" In The Trained Model's Directory
 Model = YOLO(rf"C:\Users\LENOVO\runs\detect\train{Model_File_Number}\weights\best.pt")
 Class_Names = Model.names
 Road1_X1, Road1_X2, Road1_Y1, Road1_Y2 = 0, 0, 0, 0  # Real Road1 Coords
@@ -14,6 +17,32 @@ Counts = {
     "Road3": {"Ambulance": 0, "Firetruck": 0, "Car": 0},
     "Road4": {"Ambulance": 0, "Firetruck": 0, "Car": 0},
 }
+
+Default_Timer1, Default_Timer2 = 10000, 10000
+Road1Point = Road2Point = Road3Point = Road4Point = 0
+Roads1Point = Roads2Point = Disparity = 0
+Interval1 = Default_Timer1
+Interval2 = Default_Timer2
+
+
+def millis():
+    return int(time.monotonic() * 1000)
+
+
+Start_Time = millis()
+
+
+def Reset():
+    global Road1Point, Road2Point, Road3Point, Road4Point, Roads1Point, Roads2Point, Disparity, Interval1, Interval2
+    Road1Point = Road2Point = Road3Point = Road4Point = Roads1Point = Roads2Point = (
+        Disparity
+    ) = Interval1 = Interval2 = 0
+    for Road in Counts:
+        for Vehicle in Counts[Road]:
+            Counts[Road][Vehicle] = 0
+
+
+Constant = 100
 Video = cv.VideoCapture(0)
 while True:
     Flag, Frame = Video.read()
@@ -120,6 +149,12 @@ while True:
     Roads1Point = Road1Point + Road3Point
     Roads2Point = Road2Point + Road4Point
     Disparity = Roads1Point - Roads2Point
+    Interval1 = Default_Timer1 - Constant * Disparity
+    Interval2 = Default_Timer2 + Constant * Disparity
+    Pyserial.write(str(Disparity).encode())
+    if (millis() - Start_Time) > (Interval1 + Interval2):
+        Reset()
+        Start_Time = millis()
     cv.imshow("Video", Frame)
     if cv.waitKey(1) & 0xFF == ord("g"):
         break
