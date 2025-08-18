@@ -1,8 +1,10 @@
 from ultralytics import YOLO
 import cv2 as cv
 import serial
+import time
 
-Port = "COM5"
+LastTimeSent = 0
+Port = "COM5"  # Actual Port
 Camera = 0  # Actual DroidCam's Number To Capture Video Using OpenCV
 N = 32
 Model = YOLO(rf"C:\Users\LENOVO\runs\detect\train{N}\weights\best.pt")
@@ -30,10 +32,11 @@ while True:
     Flag, Frame = Video.read()
     if not Flag:
         break
+    Frame = cv.flip(Frame, 1)
     for Road in Counts:
         for Vehicle in Counts[Road]:
             Counts[Road][Vehicle] = 0
-    Results = Model.predict(source=Frame)
+    Results = Model(Frame)
     if Results[0].boxes.data is not None:
         Boxes = Results[0].boxes.xyxy.cpu()
         Class_Indices = Results[0].boxes.cls.int().cpu().tolist()
@@ -42,7 +45,7 @@ while True:
             Boxes, Class_Indices, Confidences
         ):
             Confidence = float(TensorConfidence)
-            if Confidence > 0.6:
+            if Confidence > 0.80:
                 X1, Y1, X2, Y2 = map(int, Box)
                 CircleX = (X1 + X2) / 2
                 CircleY = (Y1 + Y2) / 2
@@ -68,8 +71,10 @@ while True:
     Road1Points = RoadPoints["Road1"] + RoadPoints["Road3"]
     Road2Points = RoadPoints["Road2"] + RoadPoints["Road4"]
     Disparity = Road1Points - Road2Points
-    Pyserial.write(f"{(Disparity)}\n".encode())
-    print(Counts)
+    CurrentTime = time.time()
+    if (CurrentTime - LastTimeSent) >= 5:
+        Pyserial.write(f"{(Disparity)}\n".encode())
+        LastTimeSent = CurrentTime
     cv.imshow("Video", Frame)
     if cv.waitKey(1) & 0xFF == ord("g"):
         break
