@@ -2,4 +2,4 @@ train: C:\Users\LENOVO\OneDrive\Documents Of LEARN\GitHub\WRO2025\Vehicles Datas
 test: C:\Users\LENOVO\OneDrive\Documents Of LEARN\GitHub\WRO2025\Vehicles Dataset\Test
 val : C:\Users\LENOVO\OneDrive\Documents Of LEARN\GitHub\WRO2025\Vehicles Dataset\Val
 nc: 3
-names: ['Ambulance', 'Firetruck', 'Car']
+names: ['Car', "Ambulance", "Firetruck"]
