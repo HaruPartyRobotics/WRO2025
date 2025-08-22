@@ -5,8 +5,8 @@ import time
 
 LastTimeSent = 0
 Port = "COM5"  # Actual Port
-Camera = 0  # Actual DroidCam's Number To Capture Video Using OpenCV
-N = 32
+Camera = 0  # Actual Number To Capture Video Using OpenCV
+N = 55
 Model = YOLO(rf"C:\Users\LENOVO\runs\detect\train{N}\weights\best.pt")
 Pyserial = serial.Serial(Port, 115200)
 Class_Names = Model.names

@@ -1,0 +1,5 @@
+train: "D:/GitHub/WRO2025/Vehicles Dataset/Train"
+val: "D:/GitHub/WRO2025/Vehicles Dataset/Val"
+test: "D:/GitHub/WRO2025/Vehicles Dataset/Test"
+nc: 2
+names: ["Car", "Ambulance"]

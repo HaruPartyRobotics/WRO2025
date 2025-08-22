@@ -1,7 +1,7 @@
 #include <ESP32Servo.h>
 Servo Servo1, Servo2, Servo3, Servo4;
 uint32_t t1, t2 = 0;
-int time1 = 10000, time2 = 10000;
+int time1 = 5000, time2 = 5000;
 #define l 100
 #define Servo_Pin1 19
 #define Servo_Pin2 22
@@ -19,8 +19,8 @@ int time1 = 10000, time2 = 10000;
 #define Side_1_Red 18
 #define Limit 0 //Real One Got By Analyzing Real Sensor Values
 int f;
-int interval1 = 10000;
-int interval2 = 10000;
+int interval1 = 5000;
+int interval2 = 5000;
 unsigned long mls;
 int Flag;
 bool side = 0;
@@ -139,12 +139,13 @@ void loop() {
     Servo3.write(90);
     Servo4.write(90);
   }
-  Serial.print("LDR1: "); 
-  Serial.println(analogRead(LDR_Pin1));
-  Serial.print("LDR2: "); 
-  Serial.println(analogRead(LDR_Pin2));
-  Serial.print("LDR3: "); 
-  Serial.println(analogRead(LDR_Pin3));
-  Serial.print("LDR4: "); 
-  Serial.println(analogRead(LDR_Pin4));
+  Serial.print("Interval 1: ");
+  Serial.println(interval1);
+  Serial.print("Side 0: ");
+  Serial.println(mls - t1);
+  Serial.print("Interval 2: ");
+  Serial.println(interval2);
+  Serial.println("Side 1: ");
+  Serial.println(mls - t2);
+  delay(100);
 }
