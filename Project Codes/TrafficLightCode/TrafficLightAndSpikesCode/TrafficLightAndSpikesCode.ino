@@ -1,11 +1,13 @@
 #include <esp_now.h>
 #include <WiFi.h>
-#include <Servo.h>
+#include <ESP32Servo.h>
 
 typedef struct struct_message {
   uint8_t id;
   bool b;
 } struct_message;
+
+bool emergency = 0;
 
 #define l 100
 #define Servo_Pin1 19
@@ -70,16 +72,16 @@ void loop() {
     digitalWrite(led[1], 1);
     digitalWrite(led[4], 1);
   }
-  if(myDatar.id >= 90 && myDatar.id <= 99){
-    if(millis() - updt >= 1000){
-      Serial.println(myDatar.b);
-      updt = millis();
-    }
+
+  if (millis() - updt >= 1000) {
+    Serial.println(emergency);
+    updt = millis();
   }
 }
 
 void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   memcpy(&myDatar, incomingData, sizeof(myDatar));
+  if (myDatar.id >= 90 && myDatar.id <= 99) emergency = myDatar.b;
 }
 
 void signal_update() {
