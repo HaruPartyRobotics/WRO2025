@@ -1,12 +1,21 @@
-#include <ESP32Servo.h>
-Servo Servo1, Servo2, Servo3, Servo4;
-uint32_t mls, updt;
-int time1 = 5000, time2 = 5000;
+#include <esp_now.h>
+#include <WiFi.h>
+#include <Servo.h>
+
+typedef struct struct_message {
+  uint8_t id;
+  bool b;
+} struct_message;
+
 #define l 100
 #define Servo_Pin1 19
 #define Servo_Pin2 22
 #define Servo_Pin3 23
 #define Servo_Pin4 15
+struct_message myDatar;
+Servo Servo1, Servo2, Servo3, Servo4;
+uint32_t mls, updt, mls2;
+int time1 = 5000, time2 = 5000;
 int led[6] = { 13, 17, 4, 27, 16, 18 };
 int interval1 = time1;
 int interval2 = time2;
@@ -15,6 +24,12 @@ bool side = 0;
 String Input = "";
 
 void setup() {
+  Serial.begin(115200);
+  WiFi.mode(WIFI_STA);
+  if (esp_now_init() != ESP_OK) {
+    ESP.restart();
+  }
+  esp_now_register_recv_cb(OnDataRecv);
   for (byte i = 0; i < 6; i++) pinMode(led[i], OUTPUT);
   Servo1.attach(Servo_Pin1);
   Servo2.attach(Servo_Pin2);
@@ -24,7 +39,6 @@ void setup() {
   Servo2.write(90);
   Servo3.write(0);
   Servo4.write(0);
-  Serial.begin(115200);
   mls = millis();
   (!side) ? curr = interval1 + mls - millis() : curr = interval2 + mls - millis();
 }
@@ -33,7 +47,6 @@ void loop() {
   while (Serial.available()) {
     Input = Serial.readStringUntil(10);
     f = Input.toInt();
-    Serial.println(f);
   }
 
   (!side) ? curr = interval1 + mls - millis() : curr = interval2 + mls - millis();
@@ -57,12 +70,16 @@ void loop() {
     digitalWrite(led[1], 1);
     digitalWrite(led[4], 1);
   }
-  if (myDatar.id >= 90 && myDatar.id <= 99) {
-    if (millis() - updt >= 1000) {
+  if(myDatar.id >= 90 && myDatar.id <= 99){
+    if(millis() - updt >= 1000){
       Serial.println(myDatar.b);
       updt = millis();
     }
   }
+}
+
+void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
+  memcpy(&myDatar, incomingData, sizeof(myDatar));
 }
 
 void signal_update() {
