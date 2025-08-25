@@ -6,20 +6,9 @@ import time
 LastTimeSent = 0
 Port = "COM5"  # Actual Port
 Camera = 0  # Actual Number To Capture Video Using OpenCV
-N = 55
-Model = YOLO(rf"C:\Users\LENOVO\runs\detect\train{N}\weights\best.pt")
+Model = YOLO(r"C:\Users\LENOVO\runs\detect\train55\weights\best.pt")
 Pyserial = serial.Serial(Port, 115200)
 Class_Names = Model.names
-Road1_X1, Road1_X2, Road1_Y1, Road1_Y2 = 0, 0, 0, 0  # Real Road1 Coords
-Road2_X1, Road2_X2, Road2_Y1, Road2_Y2 = 0, 0, 0, 0  # Real Road2 Coords
-Road3_X1, Road3_X2, Road3_Y1, Road3_Y2 = 0, 0, 0, 0  # Real Road3 Coords
-Road4_X1, Road4_X2, Road4_Y1, Road4_Y2 = 0, 0, 0, 0  # Real Road4 Coords
-Roads = {
-    "Road1": (Road1_X1, Road1_X2, Road1_Y1, Road1_Y2),
-    "Road2": (Road2_X1, Road2_X2, Road2_Y1, Road2_Y2),
-    "Road3": (Road3_X1, Road3_X2, Road3_Y1, Road3_Y2),
-    "Road4": (Road4_X1, Road4_X2, Road4_Y1, Road4_Y2),
-}
 Counts = {
     "Road1": {"Ambulance": 0, "Firetruck": 0, "Car": 0},
     "Road2": {"Ambulance": 0, "Firetruck": 0, "Car": 0},
@@ -33,6 +22,16 @@ while True:
     if not Flag:
         break
     Frame = cv.flip(Frame, 1)
+    Road1_X1, Road1_X2, Road1_Y1, Road1_Y2 = 0, 0, 0, 0  # Real Road1 Coords
+    Road2_X1, Road2_X2, Road2_Y1, Road2_Y2 = 0, 0, 0, 0  # Real Road2 Coords
+    Road3_X1, Road3_X2, Road3_Y1, Road3_Y2 = 0, 0, 0, 0  # Real Road3 Coords
+    Road4_X1, Road4_X2, Road4_Y1, Road4_Y2 = 0, 0, 0, 0  # Real Road4 Coords
+    Roads = {
+        "Road1": (Road1_X1, Road1_X2, Road1_Y1, Road1_Y2),
+        "Road2": (Road2_X1, Road2_X2, Road2_Y1, Road2_Y2),
+        "Road3": (Road3_X1, Road3_X2, Road3_Y1, Road3_Y2),
+        "Road4": (Road4_X1, Road4_X2, Road4_Y1, Road4_Y2),
+    }
     for Road in Counts:
         for Vehicle in Counts[Road]:
             Counts[Road][Vehicle] = 0
@@ -66,7 +65,9 @@ while True:
     RoadPoints = {}
     for Road, Vehicles in Counts.items():
         RoadPoints[Road] = (
-            Vehicles["Ambulance"] * 10 + Vehicles["Firetruck"] * 12 + Vehicles["Car"]
+            Vehicles["Ambulance"] * 10 * data
+            + Vehicles["Firetruck"] * 12 * data
+            + Vehicles["Car"]
         )
     Road1Points = RoadPoints["Road1"] + RoadPoints["Road3"]
     Road2Points = RoadPoints["Road2"] + RoadPoints["Road4"]
@@ -75,6 +76,8 @@ while True:
     if (CurrentTime - LastTimeSent) >= 5:
         Pyserial.write(f"{(Disparity)}\n".encode())
         LastTimeSent = CurrentTime
+    if Pyserial.in_waiting > 0:
+        data = Pyserial.readline().decode().strip()
     cv.imshow("Video", Frame)
     if cv.waitKey(1) & 0xFF == ord("g"):
         break
