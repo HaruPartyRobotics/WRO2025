@@ -2,13 +2,13 @@
 #include <WiFi.h>
 
 #define buzzerPin 13
-#define pbPin 5
+#define pbPin 23
 #define nlight 4
 #define emergencyLedPin 19
 #define MAX_NORMAL 12
 #define MAX_EMERGENCY_LIFETIME 20
 #define BUZZER_CHANNEL 0
-
+int flag = 0;
 int normalCarIDs[MAX_NORMAL];
 bool normalCarActive[MAX_NORMAL];
 int normalCount = 0;
@@ -25,7 +25,7 @@ typedef struct struct_message {
 struct_message myData;
 struct_message myDatar;
 
-uint8_t peerAddress[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+uint8_t broadcastAddress[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 esp_now_peer_info_t peerInfo;
 
 bool lastButtonState = false;
@@ -34,6 +34,8 @@ void setup() {
   Serial.begin(115200);
   pinMode(buzzerPin, OUTPUT);
   pinMode(pbPin, INPUT_PULLUP);
+  pinMode(2, OUTPUT);
+  pinMode(12, INPUT_PULLUP);
   pinMode(emergencyLedPin, OUTPUT);
   digitalWrite(emergencyLedPin, LOW);
   WiFi.mode(WIFI_STA);
@@ -41,7 +43,7 @@ void setup() {
     ESP.restart();
   }
   esp_now_register_recv_cb(OnDataRecv);
-  memcpy(peerInfo.peer_addr, peerAddress, 6);
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
@@ -52,18 +54,28 @@ void setup() {
 }
 
 void loop() {
+  bool hornbutton = !digitalRead(12);
   bool buttonPressed = !digitalRead(pbPin);
   myData.id = 1;
   myData.b = buttonPressed;
-  esp_now_send(peerAddress, (uint8_t *)&myData, sizeof(myData));
+  esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
   delay(100);
   if(myDatar.b){
     if(myDatar.id < 90){
       playBuzzerTone(normalCount);
+      digitalWrite(2, 1);
     }
   }
+  if(flag == 1){
+    ledcWriteTone(BUZZER_CHANNEL, 2000);
+  }
+  else if(hornbutton){
+    ledcWriteTone(BUZZER_CHANNEL, 1000);
+    digitalWrite(2, 0);
+  } 
   else{
     ledcWriteTone(BUZZER_CHANNEL, 0);
+    digitalWrite(2, 0);
   }
   Serial.println(myDatar.b); 
 }
@@ -72,7 +84,14 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   memcpy(&myDatar, incomingData, sizeof(myDatar));
   uint8_t rcvId = myDatar.id;
   bool rcvB = myDatar.b;
-
+  if(myDatar.b){
+    if(myDatar.id < 90){
+      flag = 1;
+    }
+  }
+  else{
+    flag = 2;
+  }
   if (rcvId >= 1 && rcvId <= 12) {
     if (rcvB) {
       addOrActivateNormal(rcvId);
@@ -165,7 +184,7 @@ void playBuzzerTone(int count) {
 }
 
 void playSpecialBuzzer() {
-  ledcWriteTone(BUZZER_CHANNEL, 1000);
+  ledcWriteTone(BUZZER_CHANNEL, 1500);
   delay(300);
   ledcWriteTone(BUZZER_CHANNEL, 0);
 }
