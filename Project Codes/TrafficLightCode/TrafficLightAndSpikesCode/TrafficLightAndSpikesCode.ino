@@ -25,9 +25,9 @@ int time1 = 5000, time2 = 5000;
 int led[6] = { 5, 18, 19, 4, 2, 15 };
 int interval1 = time1;
 int interval2 = time2;
-int curr, f, dsp, srv1, srv2, srv3, srv4 = 0;
+int curr, f, dsp = 0;
 int road;
-bool side = 0;
+bool side, srv1, srv2, srv3, srv4 = 0;
 String Input = "";
 void setup() {
   Serial.begin(115200);
@@ -74,10 +74,10 @@ void loop() {
 
   (!side) ? curr = interval1 + mls - millis() : curr = interval2 + mls - millis();
 
-  servo1.write(90*(!srv1));
-  servo2.write(90*(!srv2));
-  servo3.write(90*(!srv3));
-  servo4.write(90*(!srv4));
+  servo1.write(90*(!srv1 == 0));
+  servo2.write(90*(!srv2 == 0));
+  servo3.write(90*(!srv3 == 0));
+  servo4.write(90*(!srv4 == 0));
 
   if (curr <= 0) {   
     side = !side;
