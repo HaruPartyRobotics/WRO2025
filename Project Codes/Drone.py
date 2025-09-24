@@ -3,8 +3,7 @@ import cv2 as cv
 import serial as pyserial
 
 vid = cv.VideoCapture(0)
-direction = None
-rspeed, lspeed, uspeed, dspeed = 0, 0, 0, 0
+rspeed, lspeed, fspeed, bspeed = 0, 0, 0, 0
 Pyserial = pyserial.Serial("COM4", 115200)
 neutral_speed = 1500
 Model = YOLO(r"C:\Users\LENOVO\Downloads\best (3).pt")
@@ -84,22 +83,22 @@ while True:
                 else:
                     lspeed = neutral_speed
                 if ymin > Y1:
-                    dspeed = (1700 / fdiagonal) * (ymin - Y1)
-                    dspeed = constrain(dspeed, 1300, 1700)
+                    bspeed = (1700 / fdiagonal) * (ymin - Y1)
+                    bspeed = constrain(bspeed, 1300, 1700)
                 else:
-                    dspeed = neutral_speed
+                    bspeed = neutral_speed
                 if ymax < Y2:
-                    uspeed = (1700 / fdiagonal) * (Y2 - ymax)
-                    uspeed = constrain(uspeed, 1300, 1700)
+                    fspeed = (1700 / fdiagonal) * (Y2 - ymax)
+                    fspeed = constrain(fspeed, 1300, 1700)
                 else:
-                    uspeed = neutral_speed
+                    fspeed = neutral_speed
         if not detected:
-            uspeed = neutral_speed
+            fspeed = neutral_speed
             rspeed = neutral_speed
             lspeed = neutral_speed
-            dspeed = neutral_speed
+            bspeed = neutral_speed
         Pyserial.write(
-            f"{int(rspeed)} {int(lspeed)} {int(dspeed)} {int(uspeed)}\n".encode()
+            f"{int(rspeed)} {int(lspeed)} {int(bspeed)} {int(fspeed)}\n".encode()
         )
     cv.imshow(" ", frame)
     if cv.waitKey(1) & 0xFF == ord("q"):
