@@ -1,12 +1,14 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-#define buzzerPin 13
-#define hornPin 12
-#define pbPin 23
-#define nlight 15
-#define emergencyLedPin 19
+#define buzzerPin 25
+#define pbPin 0
+#define nlight 26
 #define BUZZER_CHANNEL 0
+unsigned long presstime, releasetime, newpress, buzzerdelay, oldmls, pressed_timer = 0;
+bool laststate = 1;
+bool state, buzzerstate = 0;
+int duration = 0;
 
 int vehicle_index[2][10] = { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                              { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
@@ -23,7 +25,7 @@ struct_message vehicle;
 uint8_t broadcastAddress[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 esp_now_peer_info_t peerInfo;
 
-bool lastButtonState = false, rFlag = 0, lastHornState = 0;
+bool lastButtonState = false, rFlag = 0, lastHornState = 0, button_pressed = 0, long_pressed = 0;
 
 
 void setup() {
@@ -31,9 +33,7 @@ void setup() {
   Serial.begin(115200);
   pinMode(buzzerPin, OUTPUT);
   pinMode(pbPin, INPUT_PULLUP);
-  pinMode(hornPin, INPUT_PULLUP);
   pinMode(nlight, OUTPUT);
-  pinMode(emergencyLedPin, OUTPUT);
   WiFi.mode(WIFI_STA);
   if (esp_now_init() != ESP_OK) {
     ESP.restart();
@@ -47,27 +47,40 @@ void setup() {
   }
   ledcSetup(BUZZER_CHANNEL, 2000, 8);
   ledcAttachPin(buzzerPin, BUZZER_CHANNEL);
+  newpress = millis();
 }
 
 void loop() {
-  bool pbState = !digitalRead(pbPin);
-  bool hState = !digitalRead(hornPin);
-
-  if (hState != lastHornState) {
-    lastHornState = hState;
-    if (hState) ledcWriteTone(BUZZER_CHANNEL, 5000);
-    else ledcWriteTone(BUZZER_CHANNEL, 500 * vehicle_sum);
-    Serial.printf("Front Horn: %s\n", (hState) ? "ON" : "OFF");
+  if (millis() - newpress > 20) {
+    state = !digitalRead(pbPin);
+    newpress = millis();
+  }
+  if (state && !button_pressed) {
+    button_pressed = 1;
+    presstime = millis();
   }
 
-
-  if (pbState != lastButtonState) {
-    lastButtonState = pbState;
-    myData.b = pbState;
+  if (state && !long_pressed && millis() - presstime > 1000){
+    ledcWriteTone(BUZZER_CHANNEL, 5000);
+    long_pressed = 1;
+  }
+  else if (state) {
+    myData.b = 1;
     esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
-    Serial.printf("Silent Horn: %s\n", (pbState) ? "ON" : "OFF");
+    Serial.printf("Sent Data 1");
   }
-
+  else if(!state && button_pressed){
+    button_pressed = 0;
+    if(long_pressed){
+      ledcWriteTone(BUZZER_CHANNEL, 0);
+      long_pressed = 0;
+    }
+    else{
+      myData.b = 0;
+      esp_now_send(broadcastAddress, (uint8_t *)&myData, sizeof(myData));
+      Serial.printf("Sent Data 0");
+    }
+  }
   if (rFlag) {
     rFlag = 0;
     Serial.printf("Car ID: %d -- Horn State: %d\n", vehicle.id, vehicle.b);
@@ -77,21 +90,26 @@ void loop() {
       Serial.println();
       for (byte i = 0; i < 10; i++) Serial.printf("%d-", vehicle_index[1][i]);
       Serial.println();
-      if (!hState) ledcWriteTone(BUZZER_CHANNEL, 500 * vehicle_sum);
+      ledcWriteTone(BUZZER_CHANNEL, 1000 + 200 * vehicle_sum);
     }
 
     else {
       if (vehicle.b == 1) {
         digitalWrite(nlight, 1);
-        ledcWriteTone(BUZZER_CHANNEL, 5000);
-        delay(50);
-        ledcWriteTone(BUZZER_CHANNEL, 0);
-        delay(50);
-        ledcWriteTone(BUZZER_CHANNEL, 5000);
-        delay(50);
-        ledcWriteTone(BUZZER_CHANNEL, 0);
-        digitalWrite(nlight, 0);
-        vehicle.b = 0;
+        if (millis() - oldmls < 100) {
+          ledcWriteTone(BUZZER_CHANNEL, 3000);
+        } else if (millis() - oldmls < 200) {
+          ledcWriteTone(BUZZER_CHANNEL, 0);
+        } else if (millis() - oldmls < 250) {
+          ledcWriteTone(BUZZER_CHANNEL, 3000);
+        } else if (millis() - oldmls < 300) {
+          ledcWriteTone(BUZZER_CHANNEL, 0);
+        } else {
+          ledcWriteTone(BUZZER_CHANNEL, 0);
+          digitalWrite(nlight, 0);
+          vehicle.b = 0;  // sequence finished
+          oldmls = millis();
+        }
       }
     }
   }

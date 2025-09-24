@@ -19,4 +19,5 @@ void indexing() {
 
   vehicle_sum = 0;
   for (byte i = 0; i < 10; i++) vehicle_sum += vehicle_index[1][i];
+  constrain(vehicle_sum, 3, 5);
 }
